@@ -211,7 +211,7 @@ public:
         }
     }
 
-    BusIn::~BusIn()
+    ~BusIn()
     {
         // No lock needed in the destructor
         for (int i = 0; i < 16; i++) {
