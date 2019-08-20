@@ -172,11 +172,11 @@ public:
  * functions from DigitalInOut are also available (only initialization is different)
  * Code is based on Igor Skochinsky's code (http://mbed.org/users/igorsk/code/FastIO/)
  */
-template <PinName p0, PinName p1=NC, PinName p2=NC, PinName p3=NC, PinName p4=NC, PinName p5=NC, PinName p6=NC, PinName p7=NC, PinName p8=NC, PinName p9=NC, PinName p10=NC, PinName p11=NC, PinName p12=NC, PinName p13=NC, PinName p14=NC, PinName p15=NC> class FastBusIn : public FastInOut<pin>
+class FastBusIn
 {
 public:
     /**
-     * Construct new FastIn object
+     * Construct new FastBusIn object
      *
      * @code
      * FastIn<LED1> led1;
@@ -185,21 +185,66 @@ public:
      * @param pin pin the FastIn object should be used for
      * @param pinmode (optional) initial mode of the pin after construction: default is PullDefault
      */
-    FastIn() : FastInOut<pin>::FastInOut() {
-        SET_MODE(pinmode);
-        SET_DIR_INPUT;
+    FastBusIn(PinName p0, PinName p1, PinName p2, PinName p3, PinName p4, PinName p5, PinName p6, PinName p7, PinName p8, PinName p9, PinName p10, PinName p11, PinName p12, PinName p13, PinName p14, PinName p15)
+    {
+        PinName pins[16] = {p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15};
+
+        // No lock needed in the constructor
+        _nc_mask = 0;
+        for (int i = 0; i < 16; i++) {
+            _pin[i] = (pins[i] != NC) ? new FastIn(pins[i]) : 0;
+            if (pins[i] != NC) {
+                _nc_mask |= (1 << i);
+            }
+        }
     }
 
-    FastIn& operator= (int value) {
-        this->write(value);
-        return *this;
-    };
-    FastIn& operator= (FastIn& rhs) {
-        return this->write(rhs.read());
-    };
-    operator int() {
-        return this->read();
-    };
+    FastBusIn(PinName pins[16])
+    {
+        // No lock needed in the constructor
+        _nc_mask = 0;
+        for (int i = 0; i < 16; i++) {
+            _pin[i] = (pins[i] != NC) ? new FastIn(pins[i]) : 0;
+            if (pins[i] != NC) {
+                _nc_mask |= (1 << i);
+            }
+        }
+    }
+
+    BusIn::~BusIn()
+    {
+        // No lock needed in the destructor
+        for (int i = 0; i < 16; i++) {
+            if (_pin[i] != 0) {
+                delete _pin[i];
+            }
+        }
+    }
+
+    int read()
+    {
+        int v = 0;
+        for (int i = 0; i < 16; i++) {
+            if (_pin[i] != 0) {
+                v |= _pin[i]->read() << i;
+            }
+        }
+        return v;
+    }
+
+    void mode(PinMode pull)
+    {
+        for (int i = 0; i < 16; i++) {
+            if (_pin[i] != 0) {
+                _pin[i]->mode(pull);
+            }
+        }
+    }
+
+    private:
+    FastIn *_pins[16];
+    int __nc_mask;
+
 };
 
 #endif
