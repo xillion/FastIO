@@ -165,4 +165,41 @@ public:
     };
 };
 
+/**
+ * Faster alternative compared to regular BusIn
+ *
+ * Except the constructor it is compatible with regular DigitalIn. Aditionally all
+ * functions from DigitalInOut are also available (only initialization is different)
+ * Code is based on Igor Skochinsky's code (http://mbed.org/users/igorsk/code/FastIO/)
+ */
+template <PinName p0, PinName p1=NC, PinName p2=NC, PinName p3=NC, PinName p4=NC, PinName p5=NC, PinName p6=NC, PinName p7=NC, PinName p8=NC, PinName p9=NC, PinName p10=NC, PinName p11=NC, PinName p12=NC, PinName p13=NC, PinName p14=NC, PinName p15=NC> class FastBusIn : public FastInOut<pin>
+{
+public:
+    /**
+     * Construct new FastIn object
+     *
+     * @code
+     * FastIn<LED1> led1;
+     * @endcode
+     *
+     * @param pin pin the FastIn object should be used for
+     * @param pinmode (optional) initial mode of the pin after construction: default is PullDefault
+     */
+    FastIn() : FastInOut<pin>::FastInOut() {
+        SET_MODE(pinmode);
+        SET_DIR_INPUT;
+    }
+
+    FastIn& operator= (int value) {
+        this->write(value);
+        return *this;
+    };
+    FastIn& operator= (FastIn& rhs) {
+        return this->write(rhs.read());
+    };
+    operator int() {
+        return this->read();
+    };
+};
+
 #endif
