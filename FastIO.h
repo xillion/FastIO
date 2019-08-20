@@ -31,7 +31,7 @@
  * Except the constructor it is compatible with regular DigitalInOut.
  * Code is based on Igor Skochinsky's code (http://mbed.org/users/igorsk/code/FastIO/)
  */
-template <PinName pin> class FastInOut
+class FastInOut
 {
 public:
     /**
@@ -46,8 +46,8 @@ public:
      *
      * @param pin pin the FastOut object should be used for
      */
-    FastInOut() {
-        INIT_PIN;
+    FastInOut(PinName pin) : _pin(pin){
+        INIT_PIN(_pin);
     }
     
     ~FastInOut() {
@@ -56,24 +56,24 @@ public:
 
     void write(int value) {
         if ( value )
-            WRITE_PIN_SET;
+            WRITE_PIN_SET(_pin);
         else
-            WRITE_PIN_CLR;
+            WRITE_PIN_CLR(_pin);
     }
     int read() {
-        return READ_PIN;
+        return READ_PIN(_pin);
     }
 
     void mode(PinMode pull) {
-        SET_MODE(pull);
+        SET_MODE(_pin, pull);
     }
 
     void output() {
-        SET_DIR_OUTPUT;
+        SET_DIR_OUTPUT(_pin);
     }
 
     void input() {
-        SET_DIR_INPUT;
+        SET_DIR_INPUT(_pin);
     }
 
     FastInOut& operator= (int value) {
@@ -81,7 +81,8 @@ public:
         return *this;
     };
     FastInOut& operator= (FastInOut& rhs) {
-        return write(rhs.read());
+        write(rhs.read());
+        return *this;
     };
     operator int() {
         return read();
@@ -89,6 +90,7 @@ public:
     
     protected:
     fastio_vars container;
+    PinName _pin;
 };
 
 /**
@@ -98,7 +100,7 @@ public:
  * functions from DigitalInOut are also available (only initialization is different)
  * Code is based on Igor Skochinsky's code (http://mbed.org/users/igorsk/code/FastIO/)
  */
-template <PinName pin, int initial = 0> class FastOut : public FastInOut<pin>
+class FastOut : public FastInOut
 {
 public:
     /**
@@ -111,9 +113,9 @@ public:
      * @param pin pin the FastOut object should be used for
      * @param initial (optional) initial state of the pin after construction: default is 0 (low)
      */
-    FastOut() : FastInOut<pin>::FastInOut() {
+    FastOut(PinName pin, int initial = 0) : FastInOut(pin) {
         this->write(initial);
-        SET_DIR_OUTPUT;
+        SET_DIR_OUTPUT(pin);
     }
 
     FastOut& operator= (int value) {
@@ -121,7 +123,8 @@ public:
         return *this;
     };
     FastOut& operator= (FastOut& rhs) {
-        return this->write(rhs.read());
+        this->write(rhs.read());
+        return *this;
     };
     operator int() {
         return this->read();
@@ -135,7 +138,7 @@ public:
  * functions from DigitalInOut are also available (only initialization is different)
  * Code is based on Igor Skochinsky's code (http://mbed.org/users/igorsk/code/FastIO/)
  */
-template <PinName pin, PinMode pinmode = PullDefault> class FastIn : public FastInOut<pin>
+class FastIn : public FastInOut
 {
 public:
     /**
@@ -148,9 +151,9 @@ public:
      * @param pin pin the FastIn object should be used for
      * @param pinmode (optional) initial mode of the pin after construction: default is PullDefault
      */
-    FastIn() : FastInOut<pin>::FastInOut() {
-        SET_MODE(pinmode);
-        SET_DIR_INPUT;
+    FastIn(PinName pin, PinMode pinmode = PullDefault) : FastInOut(pin) {
+        SET_MODE(pin, pinmode);
+        SET_DIR_INPUT(pin);
     }
 
     FastIn& operator= (int value) {
@@ -158,7 +161,8 @@ public:
         return *this;
     };
     FastIn& operator= (FastIn& rhs) {
-        return this->write(rhs.read());
+        this->write(rhs.read());
+        return *this; 
     };
     operator int() {
         return this->read();
@@ -211,7 +215,7 @@ public:
         }
     }
 
-    ~BusIn()
+    ~FastBusIn()
     {
         // No lock needed in the destructor
         for (int i = 0; i < 16; i++) {
@@ -242,8 +246,8 @@ public:
     }
 
     private:
-    FastIn *_pins[16];
-    int __nc_mask;
+    FastIn *_pin[16];
+    int _nc_mask;
 
 };
 
