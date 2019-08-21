@@ -46,35 +46,18 @@ public:
      *
      * @param pin pin the FastOut object should be used for
      */
-    FastInOut(PinName pin) : _pin(pin){
-        INIT_PIN(_pin);
-    }
+    FastInOut(PinName pin);
     
-    ~FastInOut() {
-        DESTROY_PIN;
-    }
+    ~FastInOut();
 
-    void write(int value) {
-        if ( value )
-            WRITE_PIN_SET(_pin);
-        else
-            WRITE_PIN_CLR(_pin);
-    }
-    int read() {
-        return READ_PIN(_pin);
-    }
+    void write(int value);
+    int read();
 
-    void mode(PinMode pull) {
-        SET_MODE(_pin, pull);
-    }
+    void mode(PinMode pull);
 
-    void output() {
-        SET_DIR_OUTPUT(_pin);
-    }
+    void output();
 
-    void input() {
-        SET_DIR_INPUT(_pin);
-    }
+    void input();
 
     FastInOut& operator= (int value) {
         write(value);
@@ -113,10 +96,7 @@ public:
      * @param pin pin the FastOut object should be used for
      * @param initial (optional) initial state of the pin after construction: default is 0 (low)
      */
-    FastOut(PinName pin, int initial = 0) : FastInOut(pin) {
-        this->write(initial);
-        SET_DIR_OUTPUT(pin);
-    }
+    FastOut(PinName pin, int initial = 0);
 
     FastOut& operator= (int value) {
         this->write(value);
@@ -151,10 +131,7 @@ public:
      * @param pin pin the FastIn object should be used for
      * @param pinmode (optional) initial mode of the pin after construction: default is PullDefault
      */
-    FastIn(PinName pin, PinMode pinmode = PullDefault) : FastInOut(pin) {
-        SET_MODE(pin, pinmode);
-        SET_DIR_INPUT(pin);
-    }
+    FastIn(PinName pin, PinMode pinmode = PullDefault);
 
     FastIn& operator= (int value) {
         this->write(value);
@@ -183,67 +160,24 @@ public:
      * Construct new FastBusIn object
      *
      * @code
-     * FastIn<LED1> led1;
+     * FastBusIn bus(PC_1, PC_3, PA_1);
      * @endcode
      *
      * @param pin pin the FastIn object should be used for
      * @param pinmode (optional) initial mode of the pin after construction: default is PullDefault
      */
-    FastBusIn(PinName p0, PinName p1, PinName p2, PinName p3, PinName p4, PinName p5, PinName p6, PinName p7, PinName p8, PinName p9, PinName p10, PinName p11, PinName p12, PinName p13, PinName p14, PinName p15)
-    {
-        PinName pins[16] = {p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15};
+    FastBusIn(PinName p0, PinName p1 = NC, PinName p2 = NC, PinName p3 = NC,
+          PinName p4 = NC, PinName p5 = NC, PinName p6 = NC, PinName p7 = NC,
+          PinName p8 = NC, PinName p9 = NC, PinName p10 = NC, PinName p11 = NC,
+          PinName p12 = NC, PinName p13 = NC, PinName p14 = NC, PinName p15 = NC);
 
-        // No lock needed in the constructor
-        _nc_mask = 0;
-        for (int i = 0; i < 16; i++) {
-            _pin[i] = (pins[i] != NC) ? new FastIn(pins[i]) : 0;
-            if (pins[i] != NC) {
-                _nc_mask |= (1 << i);
-            }
-        }
-    }
+    FastBusIn(PinName pins[16]);
 
-    FastBusIn(PinName pins[16])
-    {
-        // No lock needed in the constructor
-        _nc_mask = 0;
-        for (int i = 0; i < 16; i++) {
-            _pin[i] = (pins[i] != NC) ? new FastIn(pins[i]) : 0;
-            if (pins[i] != NC) {
-                _nc_mask |= (1 << i);
-            }
-        }
-    }
+    ~FastBusIn();
 
-    ~FastBusIn()
-    {
-        // No lock needed in the destructor
-        for (int i = 0; i < 16; i++) {
-            if (_pin[i] != 0) {
-                delete _pin[i];
-            }
-        }
-    }
+    int read();
 
-    int read()
-    {
-        int v = 0;
-        for (int i = 0; i < 16; i++) {
-            if (_pin[i] != 0) {
-                v |= _pin[i]->read() << i;
-            }
-        }
-        return v;
-    }
-
-    void mode(PinMode pull)
-    {
-        for (int i = 0; i < 16; i++) {
-            if (_pin[i] != 0) {
-                _pin[i]->mode(pull);
-            }
-        }
-    }
+    void mode(PinMode pull);
 
     private:
     FastIn *_pin[16];
